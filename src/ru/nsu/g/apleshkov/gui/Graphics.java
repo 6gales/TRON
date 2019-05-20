@@ -1,4 +1,4 @@
-package ru.nsu.g.apleshkov.tron.gui;
+package ru.nsu.g.apleshkov.gui;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -9,7 +9,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.scene.paint.*;
-import ru.nsu.g.apleshkov.tron.model.Model;
+import ru.nsu.g.apleshkov.tron.Tron;
 
 public class Graphics extends Application
 {
@@ -25,18 +25,18 @@ public class Graphics extends Application
 		Canvas canvas = new Canvas(1400, 700);
 		GraphicsContext context = canvas.getGraphicsContext2D();
 
-		Model model = new Model();
-		model.addPlayer("Player 1", 1);
-		model.addPlayer("Player 2", 2);
-//		model.addBot("RandomBot", 2);
+		Tron tron = new Tron();
+		tron.addPlayer("Player 1", 1);
+		tron.addPlayer("Player 2", 2);
+//		tron.addBot("RandomBot", 2);
 
-		ColorMap colorMap = new ColorMap(model.getField());
+		ColorMap colorMap = new ColorMap(tron.getField());
 		colorMap.add(1, Color.BLUE);
 		colorMap.add(2, Color.RED);
 
 		canvas.setFocusTraversable(true);
-		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(model, 1, KeyCode.LEFT, KeyCode.RIGHT));
-		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(model, 2, KeyCode.A, KeyCode.D));
+		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, 1, KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ESCAPE));
+		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, 2, KeyCode.A, KeyCode.D, KeyCode.K));
 		root.getChildren().add(canvas);
 
 		Scene scene = new Scene(root);
@@ -47,7 +47,7 @@ public class Graphics extends Application
 		primaryStage.setScene(scene);
 		primaryStage.show();
 
-		new Thread(new GameLoop(context, model, colorMap)).start();
+		new Thread(new GameLoop(context, tron, colorMap)).start();
 	}
 
 //		while ()

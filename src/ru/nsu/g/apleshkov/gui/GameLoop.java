@@ -1,9 +1,9 @@
-package ru.nsu.g.apleshkov.tron.gui;
+package ru.nsu.g.apleshkov.gui;
 
 import javafx.scene.canvas.GraphicsContext;
-import ru.nsu.g.apleshkov.tron.model.Model;
-import ru.nsu.g.apleshkov.tron.model.Player;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
+import ru.nsu.g.apleshkov.tron.Tron;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.player.Player;
 
 import java.util.Map;
 import java.util.Set;
@@ -11,33 +11,33 @@ import java.util.Set;
 public class GameLoop implements Runnable
 {
 
-	private Model model;
+	private Tron tron;
 	private GraphicsContext context;
 	private ColorMap colorMap;
 
-	GameLoop(GraphicsContext context, Model model, ColorMap colorMap)
+	GameLoop(GraphicsContext context, Tron tron, ColorMap colorMap)
 	{
 		this.context = context;
-		this.model = model;
+		this.tron = tron;
 		this.colorMap = colorMap;
 	}
 
 	@Override
 	public void run()
 	{
-		model.start();
+		tron.start();
 
 		do
 		{
-			paintField(model.getField());
-//			paintField(model.playerSet());
+			paintField(tron.getField());
+//			paintField(tron.playerSet());
 			try
 			{
 				Thread.sleep(25L);
 			}
 			catch (InterruptedException e) { break; }
 
-		} while (model.iterate());
+		} while (tron.iterate());
 
 	}
 

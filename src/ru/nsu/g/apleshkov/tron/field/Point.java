@@ -1,4 +1,4 @@
-package ru.nsu.g.apleshkov.tron.model.field;
+package ru.nsu.g.apleshkov.tron.field;
 
 public final class Point
 {

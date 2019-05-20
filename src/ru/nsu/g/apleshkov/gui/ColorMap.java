@@ -1,7 +1,7 @@
-package ru.nsu.g.apleshkov.tron.gui;
+package ru.nsu.g.apleshkov.gui;
 
 import javafx.scene.paint.Color;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Field;
 
 import java.util.Map;
 import java.util.TreeMap;

@@ -1,11 +1,11 @@
-package ru.nsu.g.apleshkov.tron.model;
+package ru.nsu.g.apleshkov.tron.player;
 
-import ru.nsu.g.apleshkov.tron.model.field.Point;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
-import ru.nsu.g.apleshkov.tron.model.field.Vector;
-import ru.nsu.g.apleshkov.tron.model.tail.GrowingTail;
-import ru.nsu.g.apleshkov.tron.model.tail.NonGrowingTail;
-import ru.nsu.g.apleshkov.tron.model.tail.Tail;
+import ru.nsu.g.apleshkov.tron.field.Point;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Vector;
+import ru.nsu.g.apleshkov.tron.player.tail.GrowingTail;
+import ru.nsu.g.apleshkov.tron.player.tail.NonGrowingTail;
+import ru.nsu.g.apleshkov.tron.player.tail.Tail;
 
 import java.util.List;
 
@@ -190,13 +190,13 @@ public class Player
 		head = tail.rollback(point);
 	}
 
-	protected boolean isAlive() { return alive; }
+	public boolean isAlive() { return alive; }
 
-	int getId() { return id; }
+	public int getId() { return id; }
 
-	int livesLeft() { return lives; }
+	public int livesLeft() { return lives; }
 
-	int getDistance(Point point)
+	public int getDistance(Point point)
 	{
 		Point last = motion.getStart();
 

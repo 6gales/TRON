@@ -1,7 +1,7 @@
-package ru.nsu.g.apleshkov.tron.model.tail;
+package ru.nsu.g.apleshkov.tron.player.tail;
 
-import ru.nsu.g.apleshkov.tron.model.field.Point;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Point;
 
 import java.util.LinkedList;
 

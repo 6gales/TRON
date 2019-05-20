@@ -1,8 +1,8 @@
-package ru.nsu.g.apleshkov.tron.model.bots;
+package ru.nsu.g.apleshkov.tron.player.bots;
 
-import ru.nsu.g.apleshkov.tron.model.Player;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
-import ru.nsu.g.apleshkov.tron.model.field.Point;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Point;
+import ru.nsu.g.apleshkov.tron.player.Player;
 
 public abstract class Bot extends Player implements Runnable
 {

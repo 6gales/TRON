@@ -1,19 +1,19 @@
-package ru.nsu.g.apleshkov.tron.model.bots;
+package ru.nsu.g.apleshkov.tron.player.bots;
 
-import ru.nsu.g.apleshkov.tron.model.Direction;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
-import ru.nsu.g.apleshkov.tron.model.field.Point;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.field.Point;
+import ru.nsu.g.apleshkov.tron.player.Direction;
 
 import java.util.Random;
 
 public class RandomBot extends Bot
 {
-	RandomBot(Point point, int id, Field field, int lives)
+	public RandomBot(Point point, int id, Field field, int lives)
 	{
 		super("Random Bot", point, id, field, lives);
 	}
 
-	RandomBot(Point point, int id, Field field, int lives, int tailLen)
+	public RandomBot(Point point, int id, Field field, int lives, int tailLen)
 	{
 		super("Random Bot", point, id, field, lives, tailLen);
 	}

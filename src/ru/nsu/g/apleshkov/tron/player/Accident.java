@@ -1,6 +1,6 @@
-package ru.nsu.g.apleshkov.tron.model;
+package ru.nsu.g.apleshkov.tron.player;
 
-import ru.nsu.g.apleshkov.tron.model.field.Point;
+import ru.nsu.g.apleshkov.tron.field.Point;
 
 public class Accident
 {

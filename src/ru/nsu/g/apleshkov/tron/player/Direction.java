@@ -1,4 +1,4 @@
-package ru.nsu.g.apleshkov.tron.model;
+package ru.nsu.g.apleshkov.tron.player;
 
 public enum Direction
 {

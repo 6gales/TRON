@@ -1,12 +1,14 @@
-package ru.nsu.g.apleshkov.tron.model;
+package ru.nsu.g.apleshkov.tron;
 
-import ru.nsu.g.apleshkov.tron.model.bots.Bot;
-import ru.nsu.g.apleshkov.tron.model.field.Field;
-import ru.nsu.g.apleshkov.tron.model.field.Point;
+import ru.nsu.g.apleshkov.tron.field.Point;
+import ru.nsu.g.apleshkov.tron.player.Player;
+import ru.nsu.g.apleshkov.tron.player.Accident;
+import ru.nsu.g.apleshkov.tron.player.bots.Bot;
+import ru.nsu.g.apleshkov.tron.field.Field;
+import ru.nsu.g.apleshkov.tron.player.Direction;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Model
+public class Tron
 {
 	private final int maxPlayers = 4;
 	private int tailLen,
@@ -48,7 +50,7 @@ public class Model
 	private Lock lock;
 	private Condition unpaused;
 
-	public Model()
+	public Tron()
 	{
 		field = new Field();
 		playerCreators = new TreeMap<>();
@@ -86,11 +88,11 @@ public class Model
 		players.clear();
 
 		pause = false;
-		constTailLen = false;
+		constTailLen = true;
 		safeTail = false;
 		arcade = false;
 
-		tailLen = 80;
+		tailLen = 160;
 		lives = 3;
 		height = 70;
 		width = 140;
@@ -110,8 +112,6 @@ public class Model
 
 	public void addBot(String name, int id)
 	{
-		Class<?>[] constructorParams = { Point.class, int.class, Field.class, int.class };
-
 		if (!botsLoaded)
 			return;
 
@@ -127,15 +127,14 @@ public class Model
 							.newInstance(p, id, field, lives, tailLen));
 
 			new Thread(bot).start();
-			return bot; });
+			return bot;
+		});
 	}
 
 	public void start()
 	{
 		field.setSize(height, width);
 		field.setSafeTail(safeTail);
-		field.boxMap();
-		field.tunnelMap(false);
 
 		for (var entry : playerCreators.entrySet())
 		{
