@@ -3,35 +3,33 @@ package ru.nsu.g.apleshkov.gui;
 import javafx.event.EventHandler;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import ru.nsu.g.apleshkov.tron.Tron;
+import ru.nsu.g.apleshkov.tron.PlayerOrder;
+import ru.nsu.g.apleshkov.extension.GameService;
 import ru.nsu.g.apleshkov.tron.player.Direction;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 public class Controller implements EventHandler<KeyEvent>
 {
-	private Tron tron;
-	private int id;
-	private KeyCode leftCode,
-					rightCode,
-					pauseCode;
+	private Map<KeyCode, Runnable> orderMap;
 
-	Controller(Tron tron, int id, KeyCode left, KeyCode right, KeyCode pauseCode)
+	public Controller(GameService gameService, int id, KeyCode left, KeyCode right, KeyCode pause)
 	{
-		this.tron = tron;
-		this.id = id;
-		leftCode = left;
-		rightCode = right;
-		this.pauseCode = pauseCode;
+		PlayerOrder leftOrder = new PlayerOrder(id, Direction.LEFT),
+			rightOrder = new PlayerOrder(id, Direction.RIGHT);
+
+		orderMap = new TreeMap<>();
+		orderMap.put(left, () -> gameService.addOrder(leftOrder));
+		orderMap.put(right, () -> gameService.addOrder(rightOrder));
+		orderMap.put(pause, gameService::pause);
 	}
 
 	@Override
 	public void handle(KeyEvent event)
 	{
-		KeyCode kc = event.getCode();
-		if (kc == leftCode)
-			tron.addOrder(id, Direction.LEFT);
-		else if (kc == rightCode)
-			tron.addOrder(id, Direction.RIGHT);
-		else if (kc == pauseCode)
-			tron.pause();
+		Optional.ofNullable(orderMap.get(event.getCode()))
+		        .ifPresent(Runnable::run);
 	}
 }

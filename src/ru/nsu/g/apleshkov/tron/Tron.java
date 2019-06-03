@@ -1,11 +1,11 @@
 package ru.nsu.g.apleshkov.tron;
 
+import ru.nsu.g.apleshkov.tron.exception.BotsNotFoundedException;
+import ru.nsu.g.apleshkov.tron.exception.OutOfIdException;
 import ru.nsu.g.apleshkov.tron.field.Point;
 import ru.nsu.g.apleshkov.tron.player.Player;
 import ru.nsu.g.apleshkov.tron.player.Accident;
-import ru.nsu.g.apleshkov.tron.player.bots.Bot;
 import ru.nsu.g.apleshkov.tron.field.Field;
-import ru.nsu.g.apleshkov.tron.player.Direction;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,17 +15,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Queue;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Tron
 {
-	private final int maxPlayers = 4;
-	private int tailLen,
+	private int maxPlayers = 100,
+		tailLen,
 		lives,
 		height,
 		width;
@@ -34,13 +32,12 @@ public class Tron
 
 	private boolean
 		pause,
-		constTailLen,
+		isConstTail,
 		safeTail,
-		arcade,
-		botsLoaded;
+		arcade;
 
+	private Queue<Integer> idPool;
 	private Map<Integer, Player> players;
-	private Map<Integer, Callable<Player>> playerCreators;
 
 	private List<String> listedBots;
 	private Queue<Integer> deleteQueue;
@@ -53,7 +50,7 @@ public class Tron
 	public Tron()
 	{
 		field = new Field();
-		playerCreators = new TreeMap<>();
+		idPool = new LinkedList<>();
 		players = new TreeMap<>();
 		deleteQueue = new LinkedList<>();
 
@@ -67,8 +64,8 @@ public class Tron
 		botList = new Properties();
 		try
 		{
-			botList.load(in);
-			botsLoaded = true;
+			if (in != null)
+				botList.load(in);
 
 			var bots = botList.entrySet();
 			for (var entry : bots)
@@ -76,19 +73,21 @@ public class Tron
 				listedBots.add((String)entry.getKey());
 			}
 		}
-		catch (IOException e)
-		{
-			botsLoaded = false;
-		}
+		catch (IOException ignore) {}
 	}
 
 	private void init()
 	{
-		playerCreators.clear();
 		players.clear();
 
+		idPool.clear();
+		for (int i = 0; i < maxPlayers; i++)
+		{
+			idPool.add(i);
+		}
+
 		pause = false;
-		constTailLen = true;
+		isConstTail = false;
 		safeTail = false;
 		arcade = false;
 
@@ -98,59 +97,70 @@ public class Tron
 		width = 140;
 	}
 
-	public void addPlayer(String name, int id)
+	public void reset() { init(); }
+
+	public int addPlayer(String name) throws Exception
 	{
-		playerCreators.put(id, () ->
-		{
-			Point p = new Point(height / (playerCreators.size() > 2 ? 3 : 2) * (id > 2 ? 2 : 1),
-			                    width / 6 * (id % 2 == 0 ? 5 : 1));
-			return (!constTailLen
-					? new Player(name, p, id, field, lives)
-					: new Player(name, p, id, field, lives, tailLen));
-		});
+		return addPlayer(name, true);
 	}
 
-	public void addBot(String name, int id)
+	public int addPlayer(String name, boolean player) throws Exception
 	{
-		if (!botsLoaded)
-			return;
+		if (idPool.isEmpty())
+			throw new OutOfIdException();
 
-		playerCreators.put(id, () ->
+		if (!player && listedBots.size() == 0)
+			throw new BotsNotFoundedException();
+
+		int id = idPool.poll();
+
+		if (player)
 		{
-			Point p = new Point(height / (playerCreators.size() > 2 ? 3 : 2) * (id > 2 ? 2 : 1),
-								width / 6 * (id % 2 == 0 ? 5 : 1));
-			Class<?> classDef = Class.forName(botList.getProperty(name));
-			Bot bot = (Bot)(constTailLen
-					? classDef.getConstructor(Point.class, int.class, Field.class, int.class)
-							.newInstance(p, id, field, lives)
-					: classDef.getConstructor(Point.class, int.class, Field.class, int.class, int.class)
-							.newInstance(p, id, field, lives, tailLen));
+			players.put(id, !isConstTail
+					? new Player(name, id, field, lives)
+					: new Player(name, id, field, lives, tailLen));
+		}
+		else
+		{
+			players.put(id, (Player)(isConstTail
+					? Class.forName(botList.getProperty(name))
+					       .getConstructor(int.class, Field.class, int.class, int.class)
+					       .newInstance(id, field, lives, tailLen)
+					: Class.forName(botList.getProperty(name))
+					       .getConstructor(int.class, Field.class, int.class)
+					       .newInstance(id, field, lives)));
+		}
 
-			new Thread(bot).start();
-			return bot;
-		});
+		return id;
 	}
+
+	public void remove(int id) { Player p = players.remove(id); if (p != null) idPool.add(id); }
+
+	//GAME PROCESS
 
 	public void start()
 	{
 		field.setSize(height, width);
 		field.setSafeTail(safeTail);
 
-		for (var entry : playerCreators.entrySet())
+		boolean increase = true;
+		int columnSize = players.size() / 2 + (players.size() % 2 == 0 ? 0 : 1),
+			parts = height / (columnSize + 1),
+			line = parts,
+			column = width / 6;
+
+		for (var entry : players.entrySet())
 		{
-			try
-			{
-				players.put(entry.getKey(), entry.getValue().call());
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
+			entry.getValue()
+				.setPosition(new Point(line, column * (increase ? 1 : 5)), increase);
+			increase = !increase;
+			if (increase)
+				line += parts;
 		}
 
 		lock.lock();
 	}
-
+	
 	public boolean iterate()
 	{
 		if (players.size() > 1)
@@ -210,12 +220,11 @@ public class Tron
 
 		if (killer.getMotion().opposite(dead.getMotion()))
 		{
-//			killer.rollback(point);
 			killer.setAlive(false);
 			if (killer.livesLeft() == 0)
 				deleteQueue.add(killer.getId());
 			return;
-		}//???
+		}
 
 		int killerDistance = killer.getDistance(point),
 				deadDistance = dead.getDistance(point),
@@ -253,50 +262,69 @@ public class Tron
 		if (!pause)
 		{
 			lock.lock();
-			unpaused.signal();
+			unpaused.signalAll();
 			lock.unlock();
 		}
 	}
 
-	public void addOrder(int id, Direction order) { Optional.ofNullable(players.get(id)).ifPresent(p -> p.addOrder(order)); }
+	public void addOrder(PlayerOrder order)
+	{
+		Optional.ofNullable(players.get(order.getId()))
+		        .ifPresent(p -> p.addOrder(order.getOrder()));
+	}
 
-	public List<String> getBotList() { if (botsLoaded) return listedBots; return null; }
+	//SETTINGS SETTERS
+
+	public void setWidth(int width) { if (width > 0) this.width = width; }
+
+	public void setHeight(int height) { if (height > 0) this.height = height; }
+
+	public void setMaxPlayers(int maxPlayers) { this.maxPlayers = maxPlayers; }
 
 	public void setArcade(boolean arcade) { this.arcade = arcade; }
 
-	public void setConstTailLen(boolean constTailLen) { this.constTailLen = constTailLen; }
+	public void setConstTail(boolean isConstTail) { this.isConstTail = isConstTail; }
+
+	public void setTailLen(int tailLen) { if (tailLen > 0) this.tailLen = tailLen; }
 
 	public void setSafeTail(boolean safeTail) { this.safeTail = safeTail; }
+
+	public void setLives(int lives) { this.lives = lives; }
+
+	//SETTINGS GETTERS
+
+	public int getWidth() { return width; }
+
+	public int getHeight() { return height; }
+
+	public int getMaxPlayers() { return maxPlayers; }
 
 	public boolean isArcade() { return arcade; }
 
 	public boolean isSafeTail() { return safeTail; }
 
-	public boolean isConstTailLen() { return constTailLen; }
-
-	public int getMaxPlayers() { return maxPlayers; }
+	public boolean isConstTail() { return isConstTail; }
 
 	public int getTailLen() { return tailLen; }
 
-	public void setTailLen(int tailLen) { this.tailLen = tailLen; }
-
 	public int getLives() { return lives; }
 
-	public void setLives(int lives) { this.lives = lives; }
+	//GAMEDATA GETTERS
 
-	public boolean isBotsLoaded() { return botsLoaded; }
+	public boolean isPaused() { return pause; }
 
-	public int getHeight() { return height; }
-
-	public int getWidth() { return width; }
-
-	public void setWidth(int width) { this.width = width; }
-
-	public void setHeight(int height) { this.height = height; }
+	public List<String> getBotList() { return listedBots; }
 
 	public Field getField() { return field; }
 
-	public void reset() { init(); }
+	public List<PlayerData> getPlayersData()
+	{
+		List<PlayerData> data = new LinkedList<>();
+		for (var entry : players.entrySet())
+		{
+			data.add(entry.getValue().getData());
+		}
 
-	public Set<Map.Entry<Integer, Player>> playerSet() { return players.entrySet(); }
+		return data;
+	}
 }

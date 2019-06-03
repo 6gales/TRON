@@ -21,33 +21,54 @@ public class Graphics extends Application
 	@Override
 	public void start(Stage primaryStage)
 	{
-		StackPane root = new StackPane();
-		Canvas canvas = new Canvas(1400, 700);
-		GraphicsContext context = canvas.getGraphicsContext2D();
-
-		Tron tron = new Tron();
-		tron.addPlayer("Player 1", 1);
-		tron.addPlayer("Player 2", 2);
-//		tron.addBot("RandomBot", 2);
-
-		ColorMap colorMap = new ColorMap(tron.getField());
-		colorMap.add(1, Color.BLUE);
-		colorMap.add(2, Color.RED);
-
-		canvas.setFocusTraversable(true);
-		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, 1, KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ESCAPE));
-		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, 2, KeyCode.A, KeyCode.D, KeyCode.K));
-		root.getChildren().add(canvas);
-
-		Scene scene = new Scene(root);
-
-		primaryStage.setResizable(false);
-		primaryStage.setTitle("TRON");
-		primaryStage.setOnCloseRequest(e -> System.exit(0));
-		primaryStage.setScene(scene);
-		primaryStage.show();
-
-		new Thread(new GameLoop(context, tron, colorMap)).start();
+//		StackPane root = new StackPane();
+//		Canvas canvas = new Canvas(1400, 700);
+//		GraphicsContext context = canvas.getGraphicsContext2D();
+//
+//		int id1 = 0, id2 = 1;
+//		Tron tron = new Tron();
+//		tron.setTailLen(1);
+//		try
+//		{
+//			id1 = tron.addPlayer("Player 1");
+//			//		tron.addPlayer("Player 2", 2);
+//		}
+//		catch (Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//
+////		tron.addBot("SurvivorBot", 1);
+//		try
+//		{
+////			id2 = tron.addPlayer("SurvivorBot", true);
+//			tron.addPlayer("SurvivorBot", false);
+//		}
+//		catch (Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+////		tron.addBot("RandomBot", 2);
+//
+//		ColorMap colorMap = new ColorMap(tron.getField());
+//		colorMap.add(0, Color.BLUE);
+//		colorMap.add(1, Color.RED);
+//		colorMap.add(2, Color.DEEPPINK);
+//
+//		canvas.setFocusTraversable(true);
+//		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, id1, KeyCode.LEFT, KeyCode.RIGHT, KeyCode.ESCAPE));
+//		canvas.addEventHandler(KeyEvent.KEY_PRESSED, new Controller(tron, id2, KeyCode.A, KeyCode.D, KeyCode.K));
+//		root.getChildren().add(canvas);
+//
+//		Scene scene = new Scene(root);
+//
+//		primaryStage.setResizable(false);
+//		primaryStage.setTitle("TRON");
+//		primaryStage.setOnCloseRequest(e -> System.exit(0));
+//		primaryStage.setScene(scene);
+//		primaryStage.show();
+//
+//		new Thread(new GameLoop(10, context, tron, colorMap)).start();
 	}
 
 //		while ()
@@ -56,7 +77,7 @@ public class Graphics extends Application
 //	@Override
 //	public void start(Stage primaryStage)
 //	{
-//		primaryStage.setTitle("TRON Menu");
+//		primaryStage.setTitle("TRON OfflineMenu");
 //		Group root = new Group();
 //		Canvas canvas = new Canvas(300, 250);
 //		GraphicsContext gc = canvas.getGraphicsContext2D();

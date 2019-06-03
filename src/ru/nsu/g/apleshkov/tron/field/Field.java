@@ -11,7 +11,7 @@ public class Field
 	private int[][] field,
 		timeStep;
 
-	private final int defaultValue = 0,
+	private final int defaultValue = -1,
 		wall = 11;
 
 	public Field() {}

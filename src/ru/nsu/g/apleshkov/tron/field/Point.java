@@ -1,6 +1,8 @@
 package ru.nsu.g.apleshkov.tron.field;
 
-public final class Point
+import java.io.Serializable;
+
+public final class Point implements Serializable
 {
 	private final int y,
 			x;

@@ -4,15 +4,15 @@ import ru.nsu.g.apleshkov.tron.field.Field;
 import ru.nsu.g.apleshkov.tron.field.Point;
 import ru.nsu.g.apleshkov.tron.player.Player;
 
-public abstract class Bot extends Player implements Runnable
+public abstract class Bot extends Player
 {
-	Bot(String name, Point point, int id, Field field, int lives)
+	Bot(String name, int id, Field field, int lives)
 	{
-		super(name, point, id, field, lives);
+		super(name, id, field, lives);
 	}
 
-	Bot(String name, Point point, int id, Field field, int lives, int tailLen)
+	Bot(String name, int id, Field field, int lives, int tailLen)
 	{
-		super(name, point, id, field, lives, tailLen);
+		super(name, id, field, lives, tailLen);
 	}
 }

@@ -1,5 +1,6 @@
 package ru.nsu.g.apleshkov.tron.player;
 
+import ru.nsu.g.apleshkov.tron.PlayerData;
 import ru.nsu.g.apleshkov.tron.field.Point;
 import ru.nsu.g.apleshkov.tron.field.Field;
 import ru.nsu.g.apleshkov.tron.field.Vector;
@@ -7,7 +8,9 @@ import ru.nsu.g.apleshkov.tron.player.tail.GrowingTail;
 import ru.nsu.g.apleshkov.tron.player.tail.NonGrowingTail;
 import ru.nsu.g.apleshkov.tron.player.tail.Tail;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class Player
 {
@@ -28,26 +31,24 @@ public class Player
 		ySize,
 		xSize;
 
-	protected Direction order;
+	private Direction order;
 	protected Tail tail;
 
 	private Accident accident = null;
 
-	public Player(String name, Point startPosition, int id, Field field, int lives)
+	public Player(String name, int id, Field field, int lives)
 	{
-		init(name, startPosition, id, field, lives);
+		init(name, id, field, lives);
 		tail = new GrowingTail(field, id);
-		tail.add(head);
 	}
 
-	public Player(String name, Point startPosition, int id, Field field, int lives, int tailLen)
+	public Player(String name, int id, Field field, int lives, int tailLen)
 	{
-		init(name, startPosition, id, field, lives);
+		init(name, id, field, lives);
 		tail = new NonGrowingTail(field, id, tailLen);
-		tail.add(head);
 	}
 
-	private void init(String name, Point startPosition, int id, Field field, int lives)
+	private void init(String name, int id, Field field, int lives)
 	{
 		this.name = name;
 		this.field = field;
@@ -55,12 +56,9 @@ public class Player
 		order = Direction.STRAIGHT;
 		alive = true;
 		this.lives = lives;
-		ySize = field.getHeight();
-		xSize = field.getWidth();
-		setPosition(startPosition);
 	}
 
-	protected void reset()
+	private void reset()
 	{
 		accident = null;
 		lives--;
@@ -71,16 +69,21 @@ public class Player
 		tail.add(head);
 	}
 
-	public void setPosition(Point startPosition)
+	public void setPosition(Point startPosition, boolean increase)
 	{
 		this.startPosition = startPosition;
 		initialMotion = new Vector(
+				startPosition.translate(0, increase ? -speed : speed),
 				startPosition,
-				startPosition.translate(0, speed * (id % 2 != 0 ? 1 : -1)),
-				id % 2 != 0);
+				increase);
 
 		head = startPosition;
 		motion = initialMotion;
+
+		tail.add(head);
+
+		ySize = field.getHeight();
+		xSize = field.getWidth();
 	}
 
 	public void move()
@@ -93,72 +96,85 @@ public class Player
 
 		if (!tail.isEmpty())
 		{
-			boolean isY = motion.yChanged();
-			boolean increased = motion.isIncreased();
-
-			int y = 0, x = 0;
-
-			switch (getAndRestore())//this?
-			{
-				case STRAIGHT:
-					if (isY)
-						y += (increased ? speed : -speed);
-					else x += (increased ? speed : -speed);
-					break;
-
-				case LEFT:
-					if (isY)
-						x += (increased ? speed : -speed);
-					else y += (increased ? -speed : speed);
-					break;
-
-				case RIGHT:
-					if (isY)
-						x += (increased ? -speed : speed);
-					else y += (increased ? speed : -speed);
-			}
-
-			increased = x >= 0 && y >= 0;
-
-			y = (head.getY() + y + ySize) % ySize;
-			x = (head.getX() + x + xSize) % xSize;
-
-			motion = motion.extendVector(new Point(y, x), increased);
+			motion = changeDirection(motion, getAndRestore());
 		}
 
 		applyMotion();
+	}
+
+	protected Vector changeDirection(Vector motion, Direction order)
+	{
+		boolean isY = motion.yChanged();
+		boolean increased = motion.isIncreased();
+
+		int y = 0, x = 0;
+
+		switch (order)
+		{
+			case STRAIGHT:
+				if (isY)
+					y += (increased ? speed : -speed);
+				else x += (increased ? speed : -speed);
+				break;
+
+			case LEFT:
+				if (isY)
+					x += (increased ? speed : -speed);
+				else y += (increased ? -speed : speed);
+				break;
+
+			case RIGHT:
+				if (isY)
+					x += (increased ? -speed : speed);
+				else y += (increased ? speed : -speed);
+		}
+
+		increased = x >= 0 && y >= 0;
+
+		y = (motion.getEnd().getY() + y + ySize) % ySize;
+		x = (motion.getEnd().getX() + x + xSize) % xSize;
+
+		return motion.extendVector(new Point(y, x), increased);
+	}
+
+	protected boolean checkPath(Vector path, Predicate<Point> check)
+	{
+		if (path.yChanged())
+		{
+			for (int i = path.getStart().getY(),
+			     dy = (path.isIncreased() ? 1 : -1);
+			     i != path.getEnd().getY();
+			     i = (i + dy + ySize) % ySize)
+			{
+				if (!check.test(new Point(i, path.getStart().getX())))
+					return false;
+			}
+		}
+		else
+		{
+			for (int i = path.getStart().getX(),
+			     dx = (path.isIncreased() ? 1 : -1);
+			     i != path.getEnd().getX();
+			     i = (i + dx + xSize) % xSize)
+			{
+				if (!check.test(new Point(path.getStart().getY(), i)))
+					return false;
+			}
+		}
+		return true;
 	}
 
 	public void applyMotion()
 	{
 		tail.rollback(head);
 
-		if (motion.yChanged())
+		if (checkPath(motion, this::checkPoint))
 		{
-			for (int i = head.getY(),
-			     dy = (motion.isIncreased() ? 1 : -1);
-			     i != motion.getEnd().getY();
-			     i = (i + dy + ySize) % ySize)
-			{
-				if (!checkPoint(new Point(i, head.getX())))
-					break;
-			}
-		}
-		else
-		{
-			for (int i = head.getX(),
-			     dx = (motion.isIncreased() ? 1 : -1);
-			     i != motion.getEnd().getX();
-			     i = (i + dx + xSize) % xSize)
-			{
-				if (!checkPoint(new Point(head.getY(), i)))
-					break;
-			}
-		}
+			head = motion.getEnd();
 
-		head = motion.getEnd();
-		if (checkPoint(head))
-			tail.add(head);
+			if (!checkPoint(head))
+				head = tail.peekLast();
+		}
 		else head = tail.peekLast();
 	}
 
@@ -209,25 +225,6 @@ public class Player
 		{
 			distance = (motion.yChanged() ? ySize : xSize) + distance;
 		}
-
-//		boolean increased = true,
-//				isY = point.getY() != last.getY();
-//		int distance = (isY ? point.getY() - last.getY() : point.getX() - last.getX());
-//
-//		if (distance < 0)
-//		{
-//			increased = false;
-//			distance *= -1;
-//		}
-//
-//		int additive = (increased ? -1 : 1);
-//
-//		if (!tail.contains(point.translate(isY ? additive : 0, isY ? 0 : additive)))
-//		{
-//			increased = !increased;
-//			distance = (isY ? ySize : xSize) - distance;
-//		}
-
 		return distance;
 	}
 
@@ -254,4 +251,6 @@ public class Player
 	public List<Point> getPoints() { return tail.getList(); }
 
 	public void clear() { tail.clear(); }
+
+	public PlayerData getData() { return new PlayerData(name, lives, id, head, new LinkedList<>(tail.getList())); }
 }

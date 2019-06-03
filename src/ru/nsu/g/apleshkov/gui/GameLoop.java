@@ -1,24 +1,29 @@
 package ru.nsu.g.apleshkov.gui;
 
 import javafx.scene.canvas.GraphicsContext;
-import ru.nsu.g.apleshkov.tron.Tron;
-import ru.nsu.g.apleshkov.tron.field.Field;
-import ru.nsu.g.apleshkov.tron.player.Player;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import ru.nsu.g.apleshkov.extension.GameService;
+import ru.nsu.g.apleshkov.gui.colors.ColorMap;
+import ru.nsu.g.apleshkov.extension.GameSettings;
+import ru.nsu.g.apleshkov.tron.PlayerData;
+import ru.nsu.g.apleshkov.tron.field.Point;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 public class GameLoop implements Runnable
 {
-
-	private Tron tron;
+	private GameService tron;
+	private GameSettings settings;
 	private GraphicsContext context;
 	private ColorMap colorMap;
+	private List<Point> walls;
 
-	GameLoop(GraphicsContext context, Tron tron, ColorMap colorMap)
+	public GameLoop(GraphicsContext context, GameService tron, GameSettings settings, ColorMap colorMap)
 	{
 		this.context = context;
 		this.tron = tron;
+		this.settings = settings;
 		this.colorMap = colorMap;
 	}
 
@@ -26,52 +31,50 @@ public class GameLoop implements Runnable
 	public void run()
 	{
 		tron.start();
+		paintField(tron.getPlayersData());
 
 		do
 		{
-			paintField(tron.getField());
-//			paintField(tron.playerSet());
-			try
+			tron.update();
+
+			if (tron.isPaused())
 			{
-				Thread.sleep(25L);
+				context.setFill(Color.BEIGE);
+				context.setFont(new Font("Arial", 30));
+				context.fillText("PAUSED",
+								settings.getWidth() * settings.getScale() * 3 / 8,
+								settings.getHeight() * settings.getScale() * 3 / 8);
 			}
-			catch (InterruptedException e) { break; }
+
+			paintField(tron.getPlayersData());
+
 
 		} while (tron.iterate());
 
+
+
 	}
 
-	private void paintField(Field field)
+	private void paintField(List<PlayerData> playersData)
 	{
-		context.setFill(colorMap.get(0));
-		context.fillRect(0, 0, 1400, 700);
+		context.setFill(colorMap.get(settings.getDefault()));
+		context.fillRect(0, 0, settings.getWidth() * settings.getScale(), settings.getHeight() * settings.getScale());
 
-		int[][] pf = field.getField();
+//		context.setFill(colorMap.get(tron.getWall()));
+//		walls.forEach(point -> context.fillRect(point.getX() * scale, point.getY() * scale, scale, scale));
 
-		for (int i = 0; i < field.getHeight(); i++)
+		playersData.forEach((data) ->
 		{
-			for (int j = 0; j < field.getWidth(); j++)
-			{
-				if (pf[i][j] != field.getDefault())
-				{
-					context.setFill(colorMap.get(pf[i][j]));
-					context.fillRect(j * 10, i * 10, 10, 10);
-				}
-			}
-		}
-	}
-
-	private void paintField(Set<Map.Entry<Integer, Player>> players)
-	{
-		context.setFill(colorMap.get(0));
-		context.fillRect(0, 0, 1400, 700);
-
-		players.forEach((entry) -> {
-			context.setFill(colorMap.get(entry.getKey()));
-			entry.getValue()
-					.getPoints()
+			context.setFill(colorMap.get(data.getId()));
+			context.fillText(data.getName() + ": " + data.getLives(),
+						10,
+						10 * data.getId() + 10);
+			data.getTail()
 					.forEach(point ->
-							context.fillRect(point.getX() * 10, point.getY() * 10, 10, 10));
+							context.fillRect(point.getX() * settings.getScale(),
+											point.getY() * settings.getScale(),
+											settings.getScale(),
+											settings.getScale()));
 		});
 
 	}

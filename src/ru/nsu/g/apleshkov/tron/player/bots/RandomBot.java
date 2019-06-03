@@ -8,40 +8,32 @@ import java.util.Random;
 
 public class RandomBot extends Bot
 {
-	public RandomBot(Point point, int id, Field field, int lives)
+	public RandomBot(int id, Field field, int lives)
 	{
-		super("Random Bot", point, id, field, lives);
+		super("Random Bot", id, field, lives);
 	}
 
-	public RandomBot(Point point, int id, Field field, int lives, int tailLen)
+	public RandomBot(int id, Field field, int lives, int tailLen)
 	{
-		super("Random Bot", point, id, field, lives, tailLen);
+		super("Random Bot", id, field, lives, tailLen);
 	}
+
+	private Random random = new Random();
 
 	@Override
-	public void run()
+	public void move()
 	{
-		Random random = new Random();
-
-		while (isAlive())
+		switch (random.nextInt(40))
 		{
-			try
-			{
-				Thread.sleep(1000);
-			}
-			catch (InterruptedException e) { break; }
-
-			switch (random.nextInt(3))
-			{
-				case 0:
-					addOrder(Direction.STRAIGHT);
-					break;
-				case 1:
-					addOrder(Direction.LEFT);
-					break;
-				default:
-					addOrder(Direction.RIGHT);
-			}
+			case 0:
+				addOrder(Direction.LEFT);
+				break;
+			case 1:
+				addOrder(Direction.RIGHT);
+				break;
+			default:
+				addOrder(Direction.STRAIGHT);
 		}
+		super.move();
 	}
 }
